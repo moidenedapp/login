@@ -1,0 +1,43 @@
+<table>
+    <thead>
+        <tr>
+        <th>Módulo</th>
+        <th>Escritura</th>
+        <th>Lectura</th>
+        <th>Actualizar</th>
+        <th>Borrar</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in records %}
+        <tr>
+            <td>{{ person[4] }}</td>
+            <td>
+                {% if person[5] %}
+                    🟢
+                {% else %}
+                    🔴
+                {% endif %}
+            </td>
+            <td>
+                {% if person[6] %}
+                🟢
+            {% else %}
+                🔴
+            {% endif %}
+            </td>
+            <td>
+                {% if person[7] %}
+                🟢
+            {% else %}
+                🔴
+            {% endif %}
+            </td>
+            <td>                {% if person[8] %}
+                🟢
+            {% else %}
+                🔴
+            {% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
