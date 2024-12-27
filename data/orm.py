@@ -48,10 +48,6 @@ class ORM():
                if hasattr(self, 'id'):
                    set_clause = ", ".join([f"{key} = %s" for key in attributes if key != 'id'])
                    query = f"UPDATE {self._table_name or self.__class__.__name__.lower()} SET {set_clause} WHERE id = %s" 
-                   
-                   print(query)
-                   print(tuple(attributes.values()) + (self.id,))
-
                    cur.execute(query, tuple(attributes.values()) + (self.id,))
                    conn.commit()
                else:
