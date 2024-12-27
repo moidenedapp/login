@@ -25,6 +25,7 @@ class ORM():
             port     = os.environ.get('DB_PORT') 
         )    
     
+    
     @classmethod
     def find(cls, **kwargs):
         conn = cls._get_connection()
@@ -37,7 +38,21 @@ class ORM():
                 ins = cls(**result) if result else None
                 return ins
         finally:
-            conn.close()   
+            conn.close()
+
+    
+    @classmethod
+    def all(cls, **kwargs)-> list:
+        conn = cls._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:                
+                query = f"SELECT * FROM {cls._table_name or cls.__name__.lower()}"   
+                cur.execute(query, tuple(kwargs.values()))
+                result = cur.fetchall()
+                return [] if not result else [cls(**row) for row in result]
+        finally:
+            conn.close()
+
 
 
     def save(self):

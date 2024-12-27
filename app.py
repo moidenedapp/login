@@ -43,32 +43,95 @@ def is_valid_user(username :str, password :str) -> bool:
 @app.route('/datos')
 def show_data():
     try:
-        connection = psycopg2.connect(**base)
-        cursor = connection.cursor()
-
         if not session.get('user_id'):
-            return redirect(url_for('login'))
-
-        query = """
-        SELECT 
-            a.id, a.name, a.lastname, b."name", d."name", 
-            c.can_read, c.can_write, c.can_update, c.can_delete
-        FROM 
-            users a
-        JOIN roles b ON a.role_id = b.id
-        JOIN permissions c ON c.role_id = b.id
-        JOIN modules d ON c.module_id = d.id WHERE a.id = %s
-        """
-        
-        cursor.execute(query, (session['user_id'],))
-        records = cursor.fetchall()
-         
-        cursor.close()
-        connection.close()
-        return render_template('table.html', records=records)
+            return redirect(url_for('login'))        
+        user = Users().find(id=session.get('user_id'))
+        return render_template('welcome.html', user=user)
         
     except Exception as e:
         return f"Error: {e}"
+    
+
+@app.route('/modules')
+def show_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        user = Users().find(id=session.get('user_id'))
+        modules = Modules().all()
+
+        return render_template('modules.html', user=user, modules=modules)
+        
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@app.route('/modules/create')
+def create_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        
+        return render_template('modules_form.html', id=0)
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+
+@app.route('/modules/edit/<int:id>')
+def edit_modules(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        
+        module = Modules().find(id=id)
+        return render_template('modules_form.html', id=id, module=module)
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+
+@app.route('/modules/save',  methods=['POST'])
+def save_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))  
+
+        id = int(request.form.get('id'))
+        name = request.form.get('name') 
+        if name is None or name == '':
+            return render_template('modules_form.html', id=id, error="El nombre del módulo es requerido.")
+
+        if id == 0:
+            module = Modules(name=name)
+        else:
+            module = Modules().find(id=id)
+            module.name = name
+
+        module.save()
+        return redirect(url_for('show_modules'))
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+@app.route('/modules/delete/<int:id>',  methods=['GEt'])
+def delete_modules(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))  
+
+        module = Modules().find(id=id)
+        if module:
+            module.delete()
+        return redirect(url_for('show_modules'))
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
 
 if __name__ == '__main__':
     app.run(debug=True)
