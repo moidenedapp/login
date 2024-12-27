@@ -1,15 +1,20 @@
-from data import ORM
-from data.models import Users, Modules, Roles, Permissions
+import pytest
+from data import Users, Modules, Roles, Permissions
 
-if __name__ == '__main__':
 
+def test_user_flow():
     module = Modules()
     module.name = 'Testing'
     module.save()
 
+    assert type(module.id) is int
+    
     role = Roles()
     role.name = 'Tester'
     role.save()
+
+    assert type(role.id) is int
+   
 
     permission = Permissions()
     permission.role_id = role.id
@@ -20,10 +25,13 @@ if __name__ == '__main__':
     permission.can_delete = True
     permission.save()
 
+    assert type(permission.id) is int
+   
+
     data = {
         'name': 'Tester',
         'lastname': 'Test lastname',
-        'email': 'tester@gogo.com' , 
+        'email': 'lllllll@gogo.com' , 
         'password': 'asdasdfsadff',
         'hash': 'asdasdfsadff',
         'role_id': role.id
@@ -31,5 +39,11 @@ if __name__ == '__main__':
 
     user = Users(**data)
     user.save()
+
+    assert type(user.id) is int
     print(user.__dict__)
 
+    user.delete()
+    permission.delete()
+    role.delete()
+    module.delete()

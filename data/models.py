@@ -1,23 +1,16 @@
-import datetime
+from .orm import ORM
 
-class Permission():
-    name: str
-    can_update: bool
-    can_write: bool
-    can_delete: bool
-    can_read: bool
+class Users(ORM):
+    pass
 
 
-class User():
-    name : str
-    lastname :str
-    email : str
-    role : str
-    password : str
-    created_at : datetime
-    updated_at : datetime
-    permissions : [Permission] # type: ignore
+class Modules(ORM):
+    pass
 
-    def login(self, password):
-        return self.password == password
-    
+
+class Roles(ORM):
+    pass
+
+
+class Permissions(ORM):
+    pass
