@@ -2,6 +2,9 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import datetime
+from dotenv import load_dotenv
+import os
+
 
 class ORM():
     _table_name = None
@@ -15,13 +18,12 @@ class ORM():
     @classmethod
     def _get_connection(cls):
         return psycopg2.connect(
-            dbname   = 'users',
-            user     = 'tester',
-            password = 'Tester669$',
-            host     = 'localhost',
-            port     = '5432' 
-        )
-    
+            dbname   = os.environ.get('DB_NAME'),
+            user     = os.environ.get('DB_USER'),
+            password = os.environ.get('DB_PASSWORD'),
+            host     = os.environ.get('DB_HOST'),
+            port     = os.environ.get('DB_PORT') 
+        )    
     
     @classmethod
     def find(cls, **kwargs):
@@ -46,10 +48,6 @@ class ORM():
                if hasattr(self, 'id'):
                    set_clause = ", ".join([f"{key} = %s" for key in attributes if key != 'id'])
                    query = f"UPDATE {self._table_name or self.__class__.__name__.lower()} SET {set_clause} WHERE id = %s" 
-                   
-                   print(query)
-                   print(tuple(attributes.values()) + (self.id,))
-
                    cur.execute(query, tuple(attributes.values()) + (self.id,))
                    conn.commit()
                else:

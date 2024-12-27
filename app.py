@@ -1,22 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, render_template_string
 from flask import session
-from data.db import DB
-from dotenv import load_dotenv
+from data import Users, Roles, Permissions, Modules
 
 import os
 import psycopg2
 
 app = Flask(__name__)
-load_dotenv()
 app.secret_key = os.environ.get('SECRET_KEY')
 
-base = {
-    'dbname': os.environ.get('DB_NAME'),
-    'user': os.environ.get('DB_USER'),
-    'password': os.environ.get('DB_PASSWORD'),
-    'host': os.environ.get('DB_HOST'),
-    'port': os.environ.get('DB_PORT')
-}
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -30,26 +21,16 @@ def login():
         else:
             error = "El Usuario o Contraseña son Incorrectos."
     
-    return render_template_string("""
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <form method="post">
-        Usuario: <input type="text" name="username" /><br>
-        Contraseña: <input type="password" name="password" /><br>
-        <button type="submit">ENTRAR</button>
-    </form>
-    """, error=error)
+    return render_template('login.html', error=error)
 
 def is_valid_user(username :str, password :str) -> bool:
     try:
 
-        db = DB(base)
-        user = db.connect().get_user_by_email(username)
+        user = Users().find(email=username)
         if not user:
             return False
         
-        if not user.login(password):
+        if user.password != password:
             return False
         
         session['user_id'] = user.id

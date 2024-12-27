@@ -1,7 +1,7 @@
-from orm import ORM
+from .orm import ORM
 
 class Users(ORM):
-    pass    
+    pass
 
 
 class Modules(ORM):
@@ -9,7 +9,7 @@ class Modules(ORM):
 
 
 class Roles(ORM):
-    pass    
+    pass
 
 
 class Permissions(ORM):
