@@ -1,9 +1,11 @@
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import datetime
 
 class ORM():
     _table_name = None
+    _exclude_fields = ['created_at', 'updated_at', 'update_at', 'id']
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -40,17 +42,23 @@ class ORM():
         conn = self._get_connection()
         try:
             with conn.cursor() as cur:
-               attributes = { k: v for k, v in self.__dict__.items() if not k.startswith('_') }
+               attributes = { k: v for k, v in self.__dict__.items() if k not in self._exclude_fields }
                if hasattr(self, 'id'):
                    set_clause = ", ".join([f"{key} = %s" for key in attributes if key != 'id'])
-                   query = f"UPDATE {self._table_name or self.__class__.__name__.lower()} SET {set_clause} WHERE id = %s"
+                   query = f"UPDATE {self._table_name or self.__class__.__name__.lower()} SET {set_clause} WHERE id = %s" 
+                   
+                   print(query)
+                   print(tuple(attributes.values()) + (self.id,))
+
                    cur.execute(query, tuple(attributes.values()) + (self.id,))
+                   conn.commit()
                else:
-                     columns = ", ".join(attributes.keys())
-                     placeholders = ", ".join(["%s"] * len(attributes))
-                     query = f"INSERT INTO {self._table_name or self.__class__.__name__.lower()} ({columns}) VALUES ({placeholders}) RETURNING id"
-                     cur.execute(query, tuple(attributes.values()))
-                     self.id = cur.fetchone()[0]
+                    columns = ", ".join(attributes.keys())
+                    placeholders = ", ".join(["%s"] * len(attributes))
+                    query = f"INSERT INTO {self._table_name or self.__class__.__name__.lower()} ({columns}) VALUES ({placeholders}) RETURNING id"
+                    cur.execute(query, tuple(attributes.values()))
+                    self.id = cur.fetchone()[0]
+                    conn.commit()
         finally:
             conn.close()
 
