@@ -1,26 +1,34 @@
 from data import ORM
-
-class Users(ORM):
-    pass
-
-class Modules(ORM) :
-    pass
-
+from data.models import Users, Modules, Roles, Permissions
 
 if __name__ == '__main__':
-    user = Users.find(id=8)
-    user.delete()
+
+    module = Modules()
+    module.name = 'Testing'
+    module.save()
+
+    role = Roles()
+    role.name = 'Tester'
+    role.save()
+
+    permission = Permissions()
+    permission.role_id = role.id
+    permission.module_id = module.id
+    permission.can_write = True
+    permission.can_read = True
+    permission.can_update = True    
+    permission.can_delete = True
+    permission.save()
 
     data = {
-        'name': 'Test',
+        'name': 'Tester',
         'lastname': 'Test lastname',
-        'email': 'gogo@gogo.com' , 
+        'email': 'tester@gogo.com' , 
         'password': 'asdasdfsadff',
         'hash': 'asdasdfsadff',
-        'role_id':6
+        'role_id': role.id
     }
 
-    # user = Users(**data)
-    # user.save()
-    # print(user.__dict__)
-
+    user = Users(**data)
+    user.save()
+    print(user.__dict__)
