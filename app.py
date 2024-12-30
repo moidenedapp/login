@@ -117,6 +117,7 @@ def save_modules():
         return f"Error: {e}"
     
 
+
 @app.route('/modules/delete/<int:id>',  methods=['GEt'])
 def delete_modules(id: int):
     try:
@@ -130,8 +131,83 @@ def delete_modules(id: int):
         
     except Exception as e:
         return f"Error: {e}"
+
+if __name__ == '__main__':
+    app.run(debug=True)
     
 
+@app.route('/roles')
+def show_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        user = Users().find(id=session.get('user_id'))
+        roles = Roles().all()
 
+        return render_template('roles.html', user=user, roles=roles)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/create')
+def create_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        return render_template('roles_form.html', id=0)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/edit/<int:id>')
+def edit_roles(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        role = Roles().find(id=id)
+        return render_template('roles_form.html', id=id, role=role)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/save', methods=['POST'])
+def save_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        id = int(request.form.get('id'))
+        name = request.form.get('name')
+        if name is None or name == '':
+            return render_template('roles_form.html', id=id, error="El nombre del rol es requerido.")
+        
+        if id == 0:
+            role = Roles(name=name)
+        else:
+            role = Roles().find(id=id)
+            role.name = name
+        
+        role.save()
+        return redirect(url_for('show_roles'))
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/delete/<int:id>', methods=['GET'])
+def delete_roles(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        role = Roles().find(id=id)
+        if role:
+            role.delete()
+        return redirect(url_for('show_roles'))
+    
+    except Exception as e:
+        return f"Error: {e}"
+        
 if __name__ == '__main__':
     app.run(debug=True)
