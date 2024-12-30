@@ -141,10 +141,9 @@ def show_roles():
     try:
         if not session.get('user_id'):
             return redirect(url_for('login'))
-        user = Users().find(id=session.get('user_id'))
         roles = Roles().all()
 
-        return render_template('roles.html', user=user, roles=roles)
+        return render_template('roles.html', roles=roles)
     
     except Exception as e:
         return f"Error: {e}"
