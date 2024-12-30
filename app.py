@@ -1,22 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, render_template_string
 from flask import session
-from data.db import DB
-from dotenv import load_dotenv
+from data import Users, Roles, Permissions, Modules
 
 import os
 import psycopg2
 
 app = Flask(__name__)
-load_dotenv()
 app.secret_key = os.environ.get('SECRET_KEY')
 
-base = {
-    'dbname': os.environ.get('DB_NAME'),
-    'user': os.environ.get('DB_USER'),
-    'password': os.environ.get('DB_PASSWORD'),
-    'host': os.environ.get('DB_HOST'),
-    'port': os.environ.get('DB_PORT')
-}
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -30,26 +21,16 @@ def login():
         else:
             error = "El Usuario o Contraseña son Incorrectos."
     
-    return render_template_string("""
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <form method="post">
-        Usuario: <input type="text" name="username" /><br>
-        Contraseña: <input type="password" name="password" /><br>
-        <button type="submit">ENTRAR</button>
-    </form>
-    """, error=error)
+    return render_template('login.html', error=error)
 
 def is_valid_user(username :str, password :str) -> bool:
     try:
 
-        db = DB(base)
-        user = db.connect().get_user_by_email(username)
+        user = Users().find(email=username)
         if not user:
             return False
         
-        if not user.login(password):
+        if user.password != password:
             return False
         
         session['user_id'] = user.id
@@ -62,32 +43,170 @@ def is_valid_user(username :str, password :str) -> bool:
 @app.route('/datos')
 def show_data():
     try:
-        connection = psycopg2.connect(**base)
-        cursor = connection.cursor()
-
         if not session.get('user_id'):
-            return redirect(url_for('login'))
-
-        query = """
-        SELECT 
-            a.id, a.name, a.lastname, b."name", d."name", 
-            c.can_read, c.can_write, c.can_update, c.can_delete
-        FROM 
-            users a
-        JOIN roles b ON a.role_id = b.id
-        JOIN permissions c ON c.role_id = b.id
-        JOIN modules d ON c.module_id = d.id WHERE a.id = %s
-        """
+            return redirect(url_for('login'))        
+        user = Users().find(id=session.get('user_id'))
+        return render_template('welcome.html', user=user)
         
-        cursor.execute(query, (session['user_id'],))
-        records = cursor.fetchall()
-         
-        cursor.close()
-        connection.close()
-        return render_template('table.html', records=records)
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+@app.route('/modules')
+def show_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        user = Users().find(id=session.get('user_id'))
+        modules = Modules().all()
+
+        return render_template('modules.html', user=user, modules=modules)
         
     except Exception as e:
         return f"Error: {e}"
 
+
+@app.route('/modules/create')
+def create_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        
+        return render_template('modules_form.html', id=0)
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+
+@app.route('/modules/edit/<int:id>')
+def edit_modules(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))        
+        
+        module = Modules().find(id=id)
+        return render_template('modules_form.html', id=id, module=module)
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+
+@app.route('/modules/save',  methods=['POST'])
+def save_modules():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))  
+
+        id = int(request.form.get('id'))
+        name = request.form.get('name') 
+        if name is None or name == '':
+            return render_template('modules_form.html', id=id, error="El nombre del módulo es requerido.")
+
+        if id == 0:
+            module = Modules(name=name)
+        else:
+            module = Modules().find(id=id)
+            module.name = name
+
+        module.save()
+        return redirect(url_for('show_modules'))
+        
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+
+@app.route('/modules/delete/<int:id>',  methods=['GEt'])
+def delete_modules(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))  
+
+        module = Modules().find(id=id)
+        if module:
+            module.delete()
+        return redirect(url_for('show_modules'))
+        
+    except Exception as e:
+        return f"Error: {e}"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+    
+
+@app.route('/roles')
+def show_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        roles = Roles().all()
+
+        return render_template('roles.html', roles=roles)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/create')
+def create_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        return render_template('roles_form.html', id=0)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/edit/<int:id>')
+def edit_roles(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        role = Roles().find(id=id)
+        return render_template('roles_form.html', id=id, role=role)
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/save', methods=['POST'])
+def save_roles():
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        id = int(request.form.get('id'))
+        name = request.form.get('name')
+        if name is None or name == '':
+            return render_template('roles_form.html', id=id, error="El nombre del rol es requerido.")
+        
+        if id == 0:
+            role = Roles(name=name)
+        else:
+            role = Roles().find(id=id)
+            role.name = name
+        
+        role.save()
+        return redirect(url_for('show_roles'))
+    
+    except Exception as e:
+        return f"Error: {e}"
+    
+@app.route('/roles/delete/<int:id>', methods=['GET'])
+def delete_roles(id: int):
+    try:
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+        
+        role = Roles().find(id=id)
+        if role:
+            role.delete()
+        return redirect(url_for('show_roles'))
+    
+    except Exception as e:
+        return f"Error: {e}"
+        
 if __name__ == '__main__':
     app.run(debug=True)

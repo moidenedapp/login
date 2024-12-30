@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<br><br>
+<div class="d-flex justify-content-end mb-3">
+    <button onclick="window.location.href='/modules/create'" class="btn btn-success">
+        Add Module
+    </button>
+</div>
+    <div class="container mt-5">
+        <h2 class="mb-4">Modules</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module in modules %}
+                    <tr>
+                        <td>{{ module.id }}</td>
+                        <td>{{ module.name }}</td>
+                        <td>{{ module.created_at }}</td>
+                        <td>
+                            <button onclick="window.location.href='/modules/edit/{{module.id}}'" class="btn btn-primary btn-sm">
+                                Edit
+                            </button>
+                            <button onclick="if(confirm('Are you sure you want to delete this module?')) { window.location.href='/modules/delete/{{module.id}}'; }" class="btn btn-danger btn-sm">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>  
+{% endblock %}
